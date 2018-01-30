@@ -1,4 +1,4 @@
-# coding=utf-8
+# coding=big5
 # Ref: http://mhwong2007.logdown.com/posts/314403
 # Parameters: account, password (optional), board name
 # Assumptions:
@@ -9,8 +9,7 @@
 #   - The account to be checked exists
 # Notes:
 #   - You may need to install "pyte" or other libs
-#   - Remember to download uao_decode (https://gist.github.com/andycjw/5617496)
-import telnetlib, pyte, uao_decode, codecs
+import telnetlib, pyte, codecs
 import os, sys, time, re, argparse, datetime
 
 siteName = 'ptt.cc'
@@ -37,41 +36,41 @@ counter = 0
 while True:
     try:
         # Login
-        print 'Login...'
+        print('Login...')
         tn.open(siteName, 23, timeout)
-        tn.read_until('或以 new 註冊:', timeout)
-        tn.write(account + '\r\n')
-        tn.read_until('請輸入您的密碼:', timeout)
-        tn.write(password + '\r\n')
+        tn.read_until(bytes('或以 new 註冊:', 'big5'), timeout)
+        tn.write((account + '\r\n').encode('ascii'))
+        tn.read_until(bytes('請輸入您的密碼:', 'big5'), timeout)
+        tn.write((password + '\r\n').encode('ascii'))
         time.sleep(3)
-        tn.write('\r\n')
-        tn.read_until('離開，再見', timeout)
+        tn.write('\r\n'.encode('ascii'))
+        tn.read_until(bytes('離開，再見', 'big5'), timeout)
 
         # 進入查詢 ID 畫面
-        print 'Querying...'
-        tn.write('t\r\nq\r\n')
-        tn.read_until('請輸入使用者代號:', timeout)
-        tn.write(liar + '\r\n')
+        print('Querying...')
+        tn.write('t\r\nq\r\n'.encode('ascii'))
+        tn.read_until(bytes('請輸入使用者代號:', 'big5'), timeout)
+        tn.write((liar + '\r\n').encode('ascii'))
         content = ''
-        while '五子棋'.decode('uao_decode', 'ignore') not in content:
-            content += tn.read_very_eager().decode('uao_decode', 'ignore')
+        while '五子棋' not in content:
+            content += tn.read_very_eager().decode('big5')
 
         # 抓取 ID
         ipStr = re.search('(\\d+\.){3}\\d+', content).group(0)
         nowStr = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
-        print 'Result:', nowStr, ipStr
+        print('Result:', nowStr, ipStr)
         with codecs.open(liar + '.txt', 'a', encoding='utf8') as fout:
             fout.write(nowStr + ' ' + ipStr + '\r\n')
 
-        tn.write('\x1B[D') # left (?)
-        tn.write('g')      # Goodbye
-        tn.write('\r\ny\r\n\r\n')
-        
-    except:
+        tn.write('\x1B[D'.encode('ascii')) # left (?)
+        tn.write('g'.encode('ascii'))      # Goodbye
+        tn.write('\r\ny\r\n\r\n'.encode('ascii'))
+
+    except Exception as e:
         nowStr = datetime.datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         with codecs.open(liar + '.txt', 'a', encoding='utf8') as fout:
-            fout.write(nowStr + ' FAIL\r\n')
-    
+            fout.write(nowStr + ' FAIL: {}\r\n'.format(e))
+
     tn.close()
     
     counter += 1
